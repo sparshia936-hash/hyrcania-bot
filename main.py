@@ -1,26 +1,20 @@
 import telebot
 from telebot import types
 import random
-import os
-from flask import Flask, request
 
 # ==============================================================================
-#           سند جامع بازی بزرگ هیرکانیا (HYRCANIA) - نسخه پایدار WEBHOOK
+#                 سند ساختار و منطق جامع بازی بزرگ هیرکانیا (HYRCANIA)
 # ==============================================================================
 
 BOT_TOKEN = "8871506098:AAFi6PFTH1gUpInr0N7Br7OY3mTlv0OXbBs"
 bot = telebot.TeleBot(BOT_TOKEN)
-app = Flask(__name__)
-
-# آدرس اختصاصی سرور رندر شما برای اتصال تلگرام
-RENDER_URL = "https://onrender.com"
 
 users_db = {}
 VIP_CODES = ["VIP_CODE_A1B2", "VIP_CODE_C3D4", "VIP_CODE_E5F6", "VIP_CODE_G7H8", "VIP_CODE_I9J0"]
 OWNER_CODE = "HYRCANIA_ETERNAL_OWNER_2026"
 
 CLASSES_INFO = {
-    "healer": {"name": "🩺 درمانگر", "hp": 140, "dmg": 18, "def": 0, "mp": 300, "speed": 12, "luck": 18, "gold": 75, "m_name": "سِینا", "f_name": "پَری", "desc_m": "سینا با الهام از حکیم بزرگ، ابوعلی سینا، دانای اسرار و طبیب نامدار هیرکانیا است.", "desc_f": "پَری با الهام از سکینه پری، نخستین پزشک جراح زن ایران، شفادهنده‌ای بی‌باک در مرزها است."},
+    "healer": {"name": "🩺 درمانگر", "hp": 140, "dmg": 18, "def": 0, "mp": 300, "speed": 12, "luck": 18, "gold": 75, "m_name": "سِینا", "f_name": "پَری", "desc_m": "سینا با الهام از حکیم بزرگ، ابوعلی سینا، دانای اسرار و طبیب نامدار هیرکانیا است.", "desc_f": "پَری با الهام از سکینه پری، نخستین پزشک جراح زن ایران, شفادهنده‌ای بی‌باک در مرزها است."},
     "mage": {"name": "🔮 جادوگر عناصر", "hp": 90, "dmg": 36, "def": 0, "mp": 240, "speed": 15, "luck": 10, "gold": 40, "m_name": "آتَر", "f_name": "وازیسْت", "desc_m": "آتَر جادوگر ارشد کائنات و نگهبان آتش زنده در مرزهای هیرکانیا است.", "desc_f": "وازیسْت ساحره‌ای مقتدر و احضارکننده‌ی آتش صاعقه از دل ابرهای باستانی است."},
     "necro": {"name": "💀 سایه‌افسون", "hp": 110, "dmg": 24, "def": 0, "mp": 220, "speed": 11, "luck": 12, "gold": 30, "m_name": "رِیوَند", "f_name": "ریما", "desc_m": "رِیوَند جادوگر مطرود کائنات و استاد جادوی سیاه و ارتش سایه‌ها است.", "desc_f": "ریما افسونگر تاریکی و ملکه سایه‌های سرگردان در نقاط مخوف هیرکانیا است."},
     "paladin": {"name": "🛡️ دادخواه", "hp": 130, "dmg": 22, "def": 2, "mp": 200, "speed": 10, "luck": 15, "gold": 40, "m_name": "هِیراد", "f_name": "دِلسا", "desc_m": "هِیراد جنگجوی زره‌پوش، مدافع نور و شوالیه پاک‌سرشت نیایشگاه کهن است.", "desc_f": "دِلسا بانوی شوالیه و نگهبان پاک‌سرشت یک نیایشگاه کهن و مقدس است."},
@@ -56,7 +50,7 @@ def send_welcome(message):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("sel_"))
 def select_class(call):
-    class_key = call.data.split("_")
+    class_key = call.data.split("_")[1]
     markup = types.InlineKeyboardMarkup()
     markup.add(
         types.InlineKeyboardButton(f"👨 مرد ({CLASSES_INFO[class_key]['m_name']})", callback_data=f"gen_{class_key}_m"),
@@ -124,3 +118,5 @@ def verify_vip(message, gender):
 
 def show_main_menu_msg(chat_id):
     markup = types.InlineKeyboardMarkup()
+    markup.row(types.InlineKeyboardButton("👤 پروفایل قهرمان", callback_data="m_prof"), types.InlineKeyboardButton("🛒 بازارچه تجهیزات", callback_data="m_shop"))
+    markup.row(types.InlineKeyboardButton("⚔️ ورود به تالار نبرد", callback_data="m_combat"))
