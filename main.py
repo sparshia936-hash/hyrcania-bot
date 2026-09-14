@@ -1,25 +1,19 @@
 import telebot
 from telebot import types
 import random
-from flask import Flask
-from threading import Thread
+import os
+from flask import Flask, request
 
 # ==============================================================================
-#                 سند ساختار و منطق جامع بازی بزرگ هیرکانیا (HYRCANIA)
+#           سند جامع بازی بزرگ هیرکانیا (HYRCANIA) - نسخه پایدار WEBHOOK
 # ==============================================================================
-
-# ساخت یک سرور وب الکی برای دور زدن و راضی نگه داشتن رندر
-app = Flask('')
-
-@app.route('/')
-def home():
-    return "Hyrcania Bot is Running Live!"
-
-def run_web_server():
-    app.run(host='0.0.0.0', port=8080)
 
 BOT_TOKEN = "8871506098:AAFi6PFTH1gUpInr0N7Br7OY3mTlv0OXbBs"
 bot = telebot.TeleBot(BOT_TOKEN)
+app = Flask(__name__)
+
+# آدرس اختصاصی سرور رندر شما برای اتصال تلگرام
+RENDER_URL = "https://onrender.com"
 
 users_db = {}
 VIP_CODES = ["VIP_CODE_A1B2", "VIP_CODE_C3D4", "VIP_CODE_E5F6", "VIP_CODE_G7H8", "VIP_CODE_I9J0"]
@@ -62,7 +56,7 @@ def send_welcome(message):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("sel_"))
 def select_class(call):
-    class_key = call.data.split("_")[1]
+    class_key = call.data.split("_")
     markup = types.InlineKeyboardMarkup()
     markup.add(
         types.InlineKeyboardButton(f"👨 مرد ({CLASSES_INFO[class_key]['m_name']})", callback_data=f"gen_{class_key}_m"),
@@ -83,7 +77,6 @@ def back_classes(call):
 def select_gender(call):
     _, class_key, gender = call.data.split("_")
     info = CLASSES_INFO[class_key]
-    name = info["m_name"] if gender == "m" else info["f_name"]
     desc = info["desc_m"] if gender == "m" else info["desc_f"]
     
     text = f"📜 **تاریخچه حماسی قهرمان:**\n{desc}\n\n📊 **آمار سطح ۱:**\n" \
@@ -129,3 +122,5 @@ def verify_vip(message, gender):
     else:
         bot.send_message(message.chat.id, "❌ کد نامعتبر است. مجدداً /start را بزنید.")
 
+def show_main_menu_msg(chat_id):
+    markup = types.InlineKeyboardMarkup()
