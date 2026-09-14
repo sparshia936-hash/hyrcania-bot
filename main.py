@@ -1,23 +1,30 @@
 import telebot
 from telebot import types
 import random
+from flask import Flask
+from threading import Thread
 
 # ==============================================================================
 #                 سند ساختار و منطق جامع بازی بزرگ هیرکانیا (HYRCANIA)
-#                                نسخه نسخه ۲.۶ - MASTER BACKUP
 # ==============================================================================
+
+# ساخت یک سرور وب الکی برای دور زدن و راضی نگه داشتن رندر
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Hyrcania Bot is Running Live!"
+
+def run_web_server():
+    app.run(host='0.0.0.0', port=8080)
 
 BOT_TOKEN = "8871506098:AAFi6PFTH1gUpInr0N7Br7OY3mTlv0OXbBs"
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# دیتابیس کاربران و کدهای فعال‌سازی
 users_db = {}
 VIP_CODES = ["VIP_CODE_A1B2", "VIP_CODE_C3D4", "VIP_CODE_E5F6", "VIP_CODE_G7H8", "VIP_CODE_I9J0"]
 OWNER_CODE = "HYRCANIA_ETERNAL_OWNER_2026"
 
-# ------------------------------------------------------------------------------
-# دیتابیس کلاس‌ها (بخش ۳ سند)
-# ------------------------------------------------------------------------------
 CLASSES_INFO = {
     "healer": {"name": "🩺 درمانگر", "hp": 140, "dmg": 18, "def": 0, "mp": 300, "speed": 12, "luck": 18, "gold": 75, "m_name": "سِینا", "f_name": "پَری", "desc_m": "سینا با الهام از حکیم بزرگ، ابوعلی سینا، دانای اسرار و طبیب نامدار هیرکانیا است.", "desc_f": "پَری با الهام از سکینه پری، نخستین پزشک جراح زن ایران، شفادهنده‌ای بی‌باک در مرزها است."},
     "mage": {"name": "🔮 جادوگر عناصر", "hp": 90, "dmg": 36, "def": 0, "mp": 240, "speed": 15, "luck": 10, "gold": 40, "m_name": "آتَر", "f_name": "وازیسْت", "desc_m": "آتَر جادوگر ارشد کائنات و نگهبان آتش زنده در مرزهای هیرکانیا است.", "desc_f": "وازیسْت ساحره‌ای مقتدر و احضارکننده‌ی آتش صاعقه از دل ابرهای باستانی است."},
@@ -30,9 +37,6 @@ CLASSES_INFO = {
     "vip": {"name": "👑 امپراتور / آرتمیس (VIP) 💎", "hp": 500, "dmg": 50, "def": 10, "mp": 500, "speed": 22, "luck": 15, "gold": 250, "m_name": "اِمپَراتور", "f_name": "آرْتِمیس", "desc_m": "طبقه شاهانه و حاکم قلمرو با دقت بالاتر و شانس لوت دوبرابر.", "desc_f": "بانوی اول قلمرو و آرتمیس بزرگ، شکارچی افسانه‌ای با لوت دوبرابر."}
 }
 
-# ------------------------------------------------------------------------------
-# دیتابیس بازارچه تجهیزات (بخش ۶ سند)
-# ------------------------------------------------------------------------------
 MARKET_ITEMS = {
     "1": {"name": "چماقِ جنگلی [رتبه E]", "price": 45, "dmg": 15, "def": 0, "hp": 0, "speed": 0, "durability": 50, "slot": "weapon", "tier": "E", "desc": "از تنه درختان خشک هیرکانیا؛ ساده اما خردکننده."},
     "2": {"name": "سپرِ ترکه‌ای [رتبه E]", "price": 30, "def": 2, "dmg": 0, "hp": 0, "speed": 0, "durability": 50, "slot": "shield", "tier": "E", "desc": "بافته شده از ترکه‌های درخت انار برای دفع ضربات اولیه."},
@@ -44,9 +48,6 @@ MARKET_ITEMS = {
     "8": {"name": "پوششِ کیهانی [رتبه SSS]", "price": 45000, "hp": 750, "def": 60, "dmg": 0, "speed": 0, "durability": 800, "slot": "armor", "tier": "SSS", "desc": "🩸 قابلیت مخصوص [پناه آخر]: دوبرابر شدن دفاع زره تن زیر ۲۰٪ خون."}
 }
 
-# ------------------------------------------------------------------------------
-# سیستم ساخت کاراکتر و مدیریت اکانت
-# ------------------------------------------------------------------------------
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.from_user.id
@@ -73,7 +74,9 @@ def select_class(call):
 @bot.callback_query_handler(func=lambda call: call.data == "back_classes")
 def back_classes(call):
     markup = types.InlineKeyboardMarkup(row_width=2)
-    buttons = [types.InlineKeyboardButton(info["name"], callback_data=f"sel_{k}") for k, info in CLASSES_INFO.items()]
+    buttons = [types.InlineKeyboardButton(info["name"], callback_data=f"sel_{k}") for k, info in CLASSES_INFO.items() if k != "vip"]
+    buttons.append(types.InlineKeyboardButton("👑 امپراتور / آرتمیس (VIP) 💎", callback_data="sel_vip"))
+    markup.add(*buttons)
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="کلاس قهرمان خود را انتخاب کنید:", reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("gen_"))
@@ -120,3 +123,9 @@ def verify_vip(message, gender):
     code = message.text.strip()
     if code in VIP_CODES:
         VIP_CODES.remove(code)
+        init_hero(user_id, "vip", gender)
+        bot.send_message(message.chat.id, "👑 حساب VIP با موفقیت تایید شد! خوش آمدید امپراتور.")
+        show_main_menu_msg(message.chat.id)
+    else:
+        bot.send_message(message.chat.id, "❌ کد نامعتبر است. مجدداً /start را بزنید.")
+
